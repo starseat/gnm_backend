@@ -1,15 +1,29 @@
 const express = require("express");
 // express async/await 의 exception 처리
 const asyncify = require('express-asyncify');
+// const path = require('path');
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// logging
+const logger = require('./utils/winston');
+
+const morgan = require('morgan'); // request 요청 로깅 미들웨어
+const combined = ':remote-addr - :remote-user ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"'; // 기존 combined 포멧에서 timestamp만 제거
+const morganFormat = process.env.NODE_ENV !== 'production' ? 'development' : combined; // morgan 출력 형태
 
 const createError = require('http-errors');
-const path = require('path')
 const cookieParser = require('cookie-parser');
-const logger = require('morgan');  // 변수명 morgan -> logger 로 변경
+const fs = require('fs');
+
 
 
 const cors = require('cors')();
 
+
+// mongoose (MongoDB)
+var mongo = require('./schemas');
+
+const utils = require('./utils');
 const routes = require('./routes');
 
 const app = express();
@@ -18,11 +32,15 @@ const app = express();
 const env = process.env.NODE_ENV || 'development';  // production
 const PORT = ((env === 'production') ? process.env.PROD_PORT : process.env.DEV_PORT) || 9090;
 
-require('dotenv').config();
+// mongoose connect
+mongo();
 
-app.use(logger('dev'));
+require('dotenv').config();
+app.use(morgan('common', {stream: fs.createWriteStream(__dirname + '/logs/access.log', {flags: 'a'}) }));
+app.use(morgan('dev'));
+// app.use(morgan(morganFormat, {stream : logger.stream}));
 /*
-logger(format)
+morgan(format)
 - format
   + 'combined', 'tiny', 'dev', 'common'
 */
@@ -30,6 +48,8 @@ logger(format)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true}));
 app.use(cookieParser());
+
+
 
 app.use(routes);
 
@@ -62,10 +82,13 @@ app.use(function(err, req, res, next) {
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
   // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+  console.log('[gnm server] internal server error. ', err);
+  logger.error('[gnm server] internal server error. ' + err.message);
+  let _status = err.status || 500;
+  res.status(_status);
+  res.json(utils.Result.makeErrorResult(_status, 'Internal Server error'));
 });
 
 app.listen(PORT, () => {
-    console.log('[gnm server] listen... (' + PORT + ')');
+    logger.info(`[gnm server] listen... (${PORT})`);
 });
