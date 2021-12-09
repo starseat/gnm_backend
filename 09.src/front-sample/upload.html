@@ -5,12 +5,17 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>File Upload Test</title>
+    <style>
+        #uploadImg { display: none; }
+    </style>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"
         integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
 </head>
 <body>
     <input type="file" id="uploadFile">
     <button id="uploadBtn">파일 업로드</button>
+    <br>
+    <img src="" id="uploadImg" alt="upload image">
     <script>
         $('#uploadBtn').on('click', function() {
             const fdata = new FormData();
@@ -21,7 +26,7 @@
             $.ajax({
                 type: 'post',
                 enctype: 'multipart/form-data',
-                url: 'http://localhost:9090/test/upload',
+                url: 'http://localhost:9090/api/upload',
                 data: fdata,
                 processData: false,
                 contentType: false,
@@ -29,6 +34,9 @@
                 timeout: (6 * 10 * 1000),
                 success: (result) => {
                     console.log('upload ajax success: ', result);
+                    $('#uploadImg').attr('src', 'http://localhost:9090/api/file' + result.data.upload_path + '/' + result.data.saved_name);
+                    // $('#uploadImg').attr('download', result.data.name);
+                    $('#uploadImg').show();
                 }, 
                 error: (err) => {
                     console.log('upload ajax error: ', err);
