@@ -13,11 +13,13 @@ const morganFormat = process.env.NODE_ENV !== 'production' ? 'development' : com
 
 const createError = require('http-errors');
 const cookieParser = require('cookie-parser');
+const bodyParser = require('body-parser');
 const fs = require('fs');
 
 
 
-const cors = require('cors')();
+// const cors = require('cors')();
+const cors = require('cors');
 
 
 // mongoose (MongoDB)
@@ -48,9 +50,9 @@ morgan(format)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true}));
 app.use(cookieParser());
+app.use(cors());
 
-
-
+// app.use(express.static('uploads'));
 app.use(routes);
 
 // // catch 404 and forward to error handler
@@ -59,10 +61,10 @@ app.use(routes);
 //     err.status = 404;
 //     next(err);
 // });
-app.use(function(req, res, next) {
-    console.log('error 404');
-    next(createError(404));
-});
+// app.use(function(req, res, next) {
+//     console.log('error 404');
+//     next(createError(404));
+// });
 
 // // error handler
 // app.use(function(err, req, res, next) {
@@ -82,11 +84,11 @@ app.use(function(err, req, res, next) {
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
   // render the error page
-  console.log('[gnm server] internal server error. ', err);
+  // console.log('[gnm server] internal server error. ', err);
   logger.error('[gnm server] internal server error. ' + err.message);
   let _status = err.status || 500;
   res.status(_status);
-  res.json(utils.Result.makeErrorResult(_status, 'Internal Server error'));
+  res.json(utils.Result.makeErrorResult(_status, err.message));
 });
 
 app.listen(PORT, () => {

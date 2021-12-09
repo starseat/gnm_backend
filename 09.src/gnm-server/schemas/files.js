@@ -7,6 +7,10 @@ const _schema = new Schema({
         type: String, 
         required: true,
     }, 
+    mime: {
+        type: String,
+        required: true
+    },
     name: {
         type: String, 
         required: true

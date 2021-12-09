@@ -41,7 +41,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 const Files = require('../schemas/files');
 
-router.post('/test/upload', upload.single('uploadFile'), async (req, res, next) => {
+router.post('/api/upload', upload.single('uploadFile'), async (req, res, next) => {
     // console.log('upload() - req.params:: ', req.params);
     // console.log('upload() - req.body:: ', req.body);
     // console.log('upload() - req.file:: ', req.file);
@@ -49,6 +49,7 @@ router.post('/test/upload', upload.single('uploadFile'), async (req, res, next) 
     try {
         const file = await Files.create({
             type: req.file.mimetype.includes('image') ? 'image' : 'file', 
+            mime: req.file.mimetype,
             name: req.file.originalname,
             saved_name: req.file.filename,
             saved_path: req.file.destination, 
@@ -68,8 +69,38 @@ router.post('/test/upload', upload.single('uploadFile'), async (req, res, next) 
         res.status(201).json(Result.makeSuccessResult(result));
     } catch (_err) {
         logger.error('[Upload] file upload failed. filename: ' + file.name);
-        res.status(500).json(Result.makeErrorResult('file save filed. ' + _err.message));
+        res.status(500).json(Result.makeErrorResult(500, 'file save filed. ' + _err.message));
     }
+});
+
+router.get('/api/uploads', async (req, res, next) => {
+    console.log('[/api/uploads] - req.params:: ', req.params);
+    console.log('[/api/uploads] - req.body:: ', req.body);
+    try {
+        const files = await Files.find().populate('filles');
+        res.status(200).json(Result.makeSuccessResult(files));
+    } catch (_err) {
+        res.status(500).json(Result.makeErrorResult(500, 'fail to upload file list. ' + _err.message));
+    }
+});
+
+router.get('/api/upload/:id', async (req, res, next) => {
+    console.log('[/api/upload/:id] - req.params:: ', req.params);
+    console.log('[/api/upload/:id] - req.body:: ', req.body);
+    try {
+        res.status(200).json('test...');
+    } catch (_err) {
+        res.status(500).json(Result.makeErrorResult(500, 'fail to upload file data. ' + _err.message));
+    }
+})
+
+router.get('/api/file/uploads/:date/:filename', async (req, res, next) => {
+    const _ext = path.extname(req.params.filename);
+    const _file = uploadDir + '/' + req.params.date + '/' + req.params.filename;
+    fs.readFile(_file, (error, data) => {
+        res.writeHead(200, { 'Content-Type': 'image/' + _ext });
+        res.end(data);
+    });
 });
 
 module.exports = router;
