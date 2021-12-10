@@ -85,8 +85,8 @@ app.use(function(err, req, res, next) {
 
   // render the error page
   // console.log('[gnm server] internal server error. ', err);
-  logger.error('[gnm server] internal server error. ' + err.message);
   let _status = err.status || 500;
+  logger.error(`[gnm server] internal server error. (status: ${_status}) ` + err.message);
   res.status(_status);
   res.json(utils.Result.makeErrorResult(_status, err.message));
 });
