@@ -4,6 +4,8 @@ const logger = require('../utils/winston');
 const express = require('express');
 const router = express.Router();
 
+const _LOG_TAG_UPLOAD = '[Upload]';
+
 router.get('/', (req, res) => {
     res.status(200);
     res.json(Result.makeSuccessResult('gnm api server.'));
@@ -65,42 +67,71 @@ router.post('/api/upload', upload.single('uploadFile'), async (req, res, next) =
             upload_path: file.upload_path
         }
 
-        logger.info('[Upload] file upload success. data: ' + JSON.stringify(result));
+        logger.info(`${_LOG_TAG_UPLOAD} file upload success. data: ${JSON.stringify(result)}`);
         res.status(201).json(Result.makeSuccessResult(result));
     } catch (_err) {
-        logger.error('[Upload] file upload failed. filename: ' + file.name);
+        logger.error(`${_LOG_TAG_UPLOAD} file upload failed. filename: ${file.name}`);
         res.status(500).json(Result.makeErrorResult(500, 'file save filed. ' + _err.message));
     }
 });
 
 router.get('/api/uploads', async (req, res, next) => {
-    console.log('[/api/uploads] - req.params:: ', req.params);
-    console.log('[/api/uploads] - req.body:: ', req.body);
+    logger.debug(`${_LOG_TAG_UPLOAD} get file info list.`);
     try {
-        const files = await Files.find().populate('filles');
+        const files = await Files.find().select('_id type name saved_name upload_path storage_type');
         res.status(200).json(Result.makeSuccessResult(files));
     } catch (_err) {
+        logger.error(`${_LOG_TAG_UPLOAD} failed to get file info list. ${_err.message}`);
         res.status(500).json(Result.makeErrorResult(500, 'fail to upload file list. ' + _err.message));
     }
 });
 
 router.get('/api/upload/:id', async (req, res, next) => {
-    console.log('[/api/upload/:id] - req.params:: ', req.params);
-    console.log('[/api/upload/:id] - req.body:: ', req.body);
+    logger.debug(`${_LOG_TAG_UPLOAD} get file info. id: ${req.params.id}`);
     try {
-        res.status(200).json('test...');
+        const file = await Files.find().where('_id').equals(req.params.id).select('_id type name saved_name upload_path storage_type');
+        res.status(200).json(Result.makeSuccessResult(file));
     } catch (_err) {
-        res.status(500).json(Result.makeErrorResult(500, 'fail to upload file data. ' + _err.message));
+        logger.error(`${_LOG_TAG_UPLOAD} failed to get file info. ${_err.message}`);
+        res.status(500).json(Result.makeErrorResult(500, 'failed to get file info. ' + _err.message));
     }
 })
 
-router.get('/api/file/uploads/:date/:filename', async (req, res, next) => {
+router.get('/api/upload/file/:date/:filename', async (req, res, next) => {
     const _ext = path.extname(req.params.filename);
     const _file = uploadDir + '/' + req.params.date + '/' + req.params.filename;
+    logger.debug(`${_LOG_TAG_UPLOAD} get file data. file: ${_file}`);
     fs.readFile(_file, (error, data) => {
         res.writeHead(200, { 'Content-Type': 'image/' + _ext });
         res.end(data);
     });
+});
+
+router.delete('/api/upload/:id', async (req, res, next) => {
+    try {
+        const deleteId = req.params.id;
+        logger.info(`${_LOG_TAG_UPLOAD} file remove. id: ${deleteId}`);
+        const files = await Files.find().where('_id').equals(deleteId);
+        if(files.length <= 0) {
+            logger.error(`${_LOG_TAG_UPLOAD} file info delete failed. file data not found. id: ${deleteId}`);
+            res.status(404).json(Result.makeErrorResult(404, 'upload image file data not found.'));
+            return;
+        }
+        const file = files[0];
+        const deleteFile = path.join(file.saved_path, '/' + file.saved_name); 
+
+        const deleteCount = await Files.deleteOne({_id: deleteId});
+        fs.unlink(deleteFile, (err) => {
+            if(err) {
+                logger.error(`${_LOG_TAG_UPLOAD} file remove failed. id: ${deleteId}, msg: ${err.message}`);
+            }
+        });
+
+        res.status(200).json(Result.makeSuccessResult(deleteCount));
+    } catch (_err) {
+        logger.error(`${_LOG_TAG_UPLOAD} file remove failed. ${_err.message}`);
+        res.status(500).json(Result.makeErrorResult(500, 'file remove failed. ' + _err.message));
+    }
 });
 
 module.exports = router;
