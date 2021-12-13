@@ -52,7 +52,7 @@ app.use(express.urlencoded({ extended: true}));
 app.use(cookieParser());
 app.use(cors());
 
-// app.use(express.static('uploads'));
+app.use('/uploads', express.static('uploads'));  // api 가 아닌 파일 직접 접근 설정
 app.use(routes);
 
 // // catch 404 and forward to error handler
