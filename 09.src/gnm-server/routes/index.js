@@ -70,7 +70,7 @@ router.post('/api/upload', upload.single('uploadFile'), async (req, res, next) =
         logger.info(`${_LOG_TAG_UPLOAD} file upload success. data: ${JSON.stringify(result)}`);
         res.status(201).json(Result.makeSuccessResult(result));
     } catch (_err) {
-        logger.error(`${_LOG_TAG_UPLOAD} file upload failed. filename: ${file.name}`);
+        logger.error(`${_LOG_TAG_UPLOAD} file upload failed. filename: ${req.file.originalname}`);
         res.status(500).json(Result.makeErrorResult(500, 'file save filed. ' + _err.message));
     }
 });
@@ -97,7 +97,7 @@ router.get('/api/upload/:id', async (req, res, next) => {
     }
 })
 
-router.get('/api/upload/file/:date/:filename', async (req, res, next) => {
+router.get('/api/img/uploads/:date/:filename', async (req, res, next) => {
     const _ext = path.extname(req.params.filename);
     const _file = uploadDir + '/' + req.params.date + '/' + req.params.filename;
     logger.debug(`${_LOG_TAG_UPLOAD} get file data. file: ${_file}`);
