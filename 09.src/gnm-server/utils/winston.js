@@ -6,6 +6,16 @@ const path = require('path');
 
 const { combine, timestamp, printf, colorize } = winston.format;
 
+const levels = { error: 0, warn: 1, info: 2, http: 3, debug: 4, }
+const level = () => { 
+    const env = process.env.NODE_ENV || 'development';
+    const isDevelopment = env === 'development';
+    return isDevelopment ? 'debug' : 'warn' ;
+}
+
+const colors = { error: 'red', warn: 'yellow', info: 'green', http: 'magenta', debug: 'blue', }
+winston.addColors(colors);
+
 const logDir = path.join( __dirname, '../logs');  // logs 디렉토리 하위에 로그 파일 저장
 if(!fs.existsSync(logDir)) {
     fs.mkdirSync(logDir);
@@ -23,8 +33,10 @@ const logger = winston.createLogger({
         timestamp({
           format: 'YYYY-MM-DD HH:mm:ss',
         }),
+        colorize({ all: true}),
         logFormat,
     ),
+    // level: level(), 
     transports: [
         new winstonDaily({
             level: 'info',
@@ -78,3 +90,4 @@ module.exports = logger;
 // https://velog.io/@gwon713/Express-winston-morgan-%EB%A1%9C%EA%B7%B8-%EA%B4%80%EB%A6%AC
 // https://loy124.tistory.com/380
 // https://for-development.tistory.com/51
+// https://xively.tistory.com/21

@@ -38,7 +38,7 @@ const PORT = ((env === 'production') ? process.env.PROD_PORT : process.env.DEV_P
 mongo();
 
 require('dotenv').config();
-app.use(morgan('common', {stream: fs.createWriteStream(__dirname + '/logs/access.log', {flags: 'a'}) }));
+app.use(morgan('common', {stream: fs.createWriteStream(__dirname + '/logs/access.log', {flags: 'a'}) }));  // app.use(morgan('combined', {stream
 app.use(morgan('dev'));
 // app.use(morgan(morganFormat, {stream : logger.stream}));
 /*
